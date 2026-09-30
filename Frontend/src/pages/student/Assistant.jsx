@@ -21,7 +21,7 @@ const md = {
   h1: ({ node, ...p }) => <h3 className="mb-1 mt-2 text-base font-bold" {...p} />,
   h2: ({ node, ...p }) => <h3 className="mb-1 mt-2 text-base font-bold" {...p} />,
   h3: ({ node, ...p }) => <h4 className="mb-1 mt-2 font-semibold" {...p} />,
-  a: ({ node, ...p }) => <a className="text-indigo-600 underline" target="_blank" rel="noreferrer" {...p} />,
+  a: ({ node, ...p }) => <a className="text-blue-600 underline" target="_blank" rel="noreferrer" {...p} />,
   pre: ({ node, ...p }) => (
     <pre className="my-2 overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100" {...p} />
   ),
@@ -31,7 +31,7 @@ const md = {
         {children}
       </code>
     ) : (
-      <code className="rounded bg-slate-200 px-1 py-0.5 text-[0.85em] text-slate-800" {...p}>
+      <code className="rounded bg-blue-100 px-1 py-0.5 text-[0.85em] text-blue-900" {...p}>
         {children}
       </code>
     ),
@@ -80,7 +80,8 @@ export default function Assistant() {
     setMessages(next)
     setLoading(true)
     try {
-      const answer = await askAI(next)
+      const { data } = await askAI(next)
+      const answer = typeof data?.answer === 'string' && data.answer.trim() ? data.answer : 'Sorry, I could not answer that. Please try again.'
       setMessages([...next, { role: 'assistant', content: answer }])
     } catch (err) {
       setError(err.response?.data?.message || 'Could not reach the AI. Is the server running?')
@@ -110,13 +111,13 @@ export default function Assistant() {
           <p className="text-sm text-slate-500">Ask anything about your studies, code, notes or campus data.</p>
         </div>
         {messages.length > 0 && (
-          <button onClick={reset} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100">
+          <button onClick={reset} className="rounded-lg border border-blue-200 px-3 py-1.5 text-sm hover:bg-blue-50">
             New chat
           </button>
         )}
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-xl border bg-white p-4">
+      <div className="flex-1 space-y-3 overflow-y-auto rounded-xl border border-blue-100 bg-white p-4">
         {messages.length === 0 && (
           <div className="py-6 text-center">
             <div className="text-4xl">🤖</div>
@@ -126,7 +127,7 @@ export default function Assistant() {
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="rounded-full border px-3 py-1.5 text-sm text-slate-700 hover:bg-indigo-50"
+                  className="rounded-full border border-blue-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-blue-50"
                 >
                   {s}
                 </button>
@@ -139,7 +140,7 @@ export default function Assistant() {
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
               className={`max-w-[88%] rounded-2xl px-4 py-2 text-sm ${
-                m.role === 'user' ? 'whitespace-pre-wrap bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'
+                m.role === 'user' ? 'whitespace-pre-wrap bg-blue-600 text-white' : 'bg-sky-50 text-slate-800'
               }`}
             >
               {m.role === 'user' ? m.content : <Answer text={m.content} />}
@@ -149,7 +150,7 @@ export default function Assistant() {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-500">Thinking...</div>
+            <div className="rounded-2xl bg-sky-50 px-4 py-2 text-sm text-slate-500">Thinking...</div>
           </div>
         )}
         {error && <div className="rounded-lg bg-red-50 p-2 text-sm text-red-600">{error}</div>}
@@ -163,12 +164,12 @@ export default function Assistant() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
           placeholder="Type your question... (Enter to send, Shift+Enter for new line)"
-          className="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border border-blue-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={() => send()}
           disabled={loading || !text.trim()}
-          className="rounded-xl bg-indigo-600 px-5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-xl bg-blue-600 px-5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           Send
         </button>
