@@ -6,6 +6,7 @@ import StatusBadge from '../../components/common/StatusBadge'
 import NaacAuditor from '../../components/admin/NaacAuditor'
 
 const actions = [
+  { to: '/admin/hod-attendance', title: 'Class attendance', desc: "Today's classes, present and absent students", roles: ['hod', 'admin'] },
   { to: '/admin/qr', title: 'Start attendance QR', desc: 'Generate a class QR that expires on its own', roles: ['admin', 'faculty'] },
   { to: '/admin/requests', title: 'Review leave requests', desc: 'Approve or reject in real time', roles: ['admin', 'warden'] },
   { to: '/admin/complaints', title: 'Complaint tracker', desc: 'AI-prioritised, with recurring flags', roles: ['admin', 'warden'] },
@@ -30,7 +31,7 @@ export default function AdminDashboard() {
   const [d, setD] = useState({ leaves: null, analytics: null, certs: null, fees: null })
 
   useEffect(() => {
-    if (user.role === 'faculty') return
+    if (['faculty', 'teacher', 'hod'].includes(user.role)) return
     let alive = true
     Promise.allSettled([
       api.get('/leave/pending'),

@@ -32,6 +32,7 @@ import PendingStaff from './pages/admin/PendingStaff'
 import DepartmentManager from './pages/admin/DepartmentManager'
 import Overview from './pages/admin/Overview'
 import StaffWelcome from './pages/admin/StaffWelcome'
+import HodAttendance from './pages/admin/HodAttendance'
 
 // Shown for any module page that hasn't been built yet
 const ComingSoon = () => (
@@ -111,6 +112,7 @@ export default function App() {
         <Route path="pending-staff" element={<Staff roles={['admin']}><PendingStaff /></Staff>} />
         <Route path="departments" element={<Staff roles={['admin']}><DepartmentManager /></Staff>} />
         <Route path="qr" element={<Staff roles={CAN_QR}><GenerateQR /></Staff>} />
+        <Route path="hod-attendance" element={<Staff roles={['hod', 'admin']}><HodAttendance /></Staff>} />
         <Route path="timetable" element={<Staff roles={CAN_QR}><Timetable /></Staff>} />
         <Route path="requests" element={<Staff roles={['admin', 'warden', 'hod']}><ApproveRequests /></Staff>} />
         <Route path="complaints" element={<Staff roles={['admin', 'warden']}><ComplaintTracker /></Staff>} />

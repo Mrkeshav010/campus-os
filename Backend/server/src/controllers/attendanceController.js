@@ -1,5 +1,6 @@
 const AttendanceSession = require('../models/AttendanceSession');
 const Attendance = require('../models/Attendance');
+const User = require('../models/User');
 const { generateSessionCode, generateQRImage } = require('../utils/qrGenerator');
 const { dayKey, sameSection, calculateAttendance } = require('../utils/attendanceCalc');
 
@@ -145,10 +146,115 @@ const manualBulkMark = async (req, res, next) => {
   }
 };
 
+// GET /api/attendance/hod/today?date=YYYY-MM-DD&branch=MCA
+// HOD: sirf apne department. Admin: ?branch= se koi bhi department.
+const getHodDaySummary = async (req, res, next) => {
+  try {
+    const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+    const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '')
+      ? req.query.date
+      : new Date(Date.now() + IST_OFFSET).toISOString().slice(0, 10);
+    const start = new Date(`${dateStr}T00:00:00+05:30`);
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+
+    const dept = String(req.user.role === 'admin' ? req.query.branch || '' : req.user.branch || '').trim();
+    if (!dept) {
+      return res.status(400).json({ message: 'Department (branch) not set for this account' });
+    }
+    const deptRegex = new RegExp(`^${dept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+
+    // 1) Aaj ke sessions, sirf is department ke teachers ke
+    const sessions = (
+      await AttendanceSession.find({ expiresAt: { $gte: start, $lt: end } })
+        .populate('createdBy', 'name branch')
+        .sort({ expiresAt: 1 })
+        .lean()
+    ).filter((s) => s.createdBy?.branch && deptRegex.test(s.createdBy.branch));
+
+    if (sessions.length === 0) {
+      return res.status(200).json({ date: dateStr, department: dept, totals: { classes: 0, present: 0, absent: 0 }, classes: [] });
+    }
+
+    // 2) Department ke saare students + in sessions ki attendance
+    const students = await User.find({ role: 'student', branch: deptRegex, isActive: { $ne: false } })
+      .select('name rollNumber year section')
+      .lean();
+    const records = await Attendance.find({
+      session: { $in: sessions.map((s) => s._id) },
+      status: 'present',
+    })
+      .select('student session')
+      .lean();
+
+    const sessionToGroup = {};
+    const groups = {};
+
+    // 3) Same subject+year+section ke multiple QR ko ek class maano
+    for (const s of sessions) {
+      const key = `${String(s.subject).trim().toLowerCase()}|${s.year}|${String(s.section).trim().toLowerCase()}`;
+      sessionToGroup[String(s._id)] = key;
+      if (!groups[key]) {
+        groups[key] = {
+          subject: s.subject,
+          year: s.year,
+          section: s.section,
+          teacher: s.createdBy?.name,
+          firstQrAt: s.expiresAt,
+          sessionIds: [],
+          presentIds: new Set(),
+        };
+      }
+      groups[key].sessionIds.push(String(s._id));
+    }
+    for (const r of records) {
+      const g = groups[sessionToGroup[String(r.session)]];
+      if (g) g.presentIds.add(String(r.student));
+    }
+
+    const classes = Object.values(groups).map((g) => {
+      const classStudents = students.filter(
+        (st) => st.year === g.year && sameSection(g.section, st.section)
+      );
+      const present = [];
+      const absent = [];
+      for (const st of classStudents) {
+        const row = { userId: st._id, name: st.name, rollNumber: st.rollNumber };
+        (g.presentIds.has(String(st._id)) ? present : absent).push(row);
+      }
+      return {
+        subject: g.subject,
+        year: g.year,
+        section: g.section,
+        teacher: g.teacher,
+        time: g.firstQrAt,
+        totalStudents: classStudents.length,
+        presentCount: present.length,
+        absentCount: absent.length,
+        present,
+        absent,
+      };
+    });
+
+    res.status(200).json({
+      date: dateStr,
+      department: dept,
+      totals: {
+        classes: classes.length,
+        present: classes.reduce((a, c) => a + c.presentCount, 0),
+        absent: classes.reduce((a, c) => a + c.absentCount, 0),
+      },
+      classes,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createSession,
   markAttendance,
   getMyAttendancePercentage,
   getSessionAttendees,
   manualBulkMark,
+  getHodDaySummary,
 };
