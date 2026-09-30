@@ -40,15 +40,15 @@ const staffNav = [
 
 const themes = {
   student: {
-    side: 'bg-slate-900',
-    active: 'bg-indigo-600',
-    badge: 'bg-indigo-100 text-indigo-700',
+    side: 'bg-blue-900',
+    active: 'bg-blue-500',
+    badge: 'bg-blue-100 text-blue-700',
     title: 'Student Portal',
   },
   staff: {
-    side: 'bg-emerald-950',
-    active: 'bg-emerald-600',
-    badge: 'bg-emerald-100 text-emerald-700',
+    side: 'bg-sky-900',
+    active: 'bg-sky-500',
+    badge: 'bg-sky-100 text-sky-700',
     title: 'Admin Console',
   },
 }
@@ -70,7 +70,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 md:flex">
+    <div className="min-h-screen bg-sky-50 md:flex">
       {open && (
         <div className="fixed inset-0 z-20 bg-black/40 md:hidden" onClick={() => setOpen(false)} />
       )}
@@ -82,7 +82,7 @@ export default function Layout() {
       >
         <div className="mb-6">
           <div className="text-xl font-bold text-white">Campus Connect</div>
-          <div className="text-xs uppercase tracking-wider text-slate-400">{theme.title}</div>
+          <div className="text-xs uppercase tracking-wider text-blue-200">{theme.title}</div>
         </div>
         <nav className="space-y-1">
           {items.map((item) => (
@@ -104,7 +104,7 @@ export default function Layout() {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="flex items-center justify-between gap-2 border-b bg-white px-4 py-3">
+        <header className="flex items-center justify-between gap-2 border-b border-sky-100 bg-white px-4 py-3">
           <button className="text-2xl md:hidden" onClick={() => setOpen(true)}>
             ☰
           </button>

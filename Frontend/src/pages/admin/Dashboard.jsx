@@ -18,7 +18,7 @@ const actions = [
 
 function Stat({ label, value, to, tone = 'text-slate-800' }) {
   return (
-    <Link to={to} className="rounded-xl border-l-4 border-emerald-500 bg-white p-4 shadow-sm transition hover:shadow">
+    <Link to={to} className="rounded-xl border-l-4 border-blue-500 bg-white p-4 shadow-sm transition hover:shadow">
       <div className="text-xs uppercase tracking-wide text-slate-400">{label}</div>
       <div className={`mt-1 text-3xl font-bold ${tone}`}>{value ?? '—'}</div>
     </Link>
@@ -70,10 +70,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl bg-emerald-900 p-6 text-white">
-        <div className="text-xs uppercase tracking-widest text-emerald-300">Admin console</div>
+      <div className="rounded-2xl bg-gradient-to-r from-blue-700 to-sky-500 p-6 text-white shadow-sm">
+        <div className="text-xs uppercase tracking-widest text-blue-100">Admin console</div>
         <h1 className="mt-1 text-2xl font-bold">Welcome, {user.name}</h1>
-        <p className="text-sm capitalize text-emerald-200">
+        <p className="text-sm capitalize text-blue-100">
           {user.role} · {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
@@ -90,17 +90,17 @@ export default function AdminDashboard() {
 
       {showLeavePanel && (
         <div className="grid gap-5 lg:grid-cols-2">
-          <section className="rounded-xl border bg-white p-4">
+          <section className="rounded-xl border border-blue-100 bg-white p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-semibold">Needs your decision</h2>
-              <Link to="/admin/requests" className="text-xs text-emerald-700">Open queue</Link>
+              <Link to="/admin/requests" className="text-xs text-blue-600">Open queue</Link>
             </div>
             {pendingLeaves.length === 0 ? (
               <div className="text-sm text-slate-400">No pending requests.</div>
             ) : (
               <ul className="space-y-2 text-sm">
                 {pendingLeaves.slice(0, 5).map((l) => (
-                  <li key={l._id} className="flex items-center justify-between rounded bg-slate-50 px-3 py-2">
+                  <li key={l._id} className="flex items-center justify-between rounded bg-sky-50 px-3 py-2">
                     <div>
                       <div className="font-medium">{l.student?.name}</div>
                       <div className="text-xs capitalize text-slate-500">
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
             )}
           </section>
 
-          <section className="rounded-xl border bg-white p-4">
+          <section className="rounded-xl border border-blue-100 bg-white p-4">
             <h2 className="mb-3 font-semibold">Complaint hotspots</h2>
             {heat.length === 0 ? (
               <div className="text-sm text-slate-400">No complaints yet.</div>
@@ -126,8 +126,8 @@ export default function AdminDashboard() {
                       <span>{h._id}</span>
                       <span className="font-medium">{h.count}</span>
                     </div>
-                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full bg-emerald-500" style={{ width: `${(h.count / maxHeat) * 100}%` }} />
+                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-blue-50">
+                      <div className="h-full bg-blue-500" style={{ width: `${(h.count / maxHeat) * 100}%` }} />
                     </div>
                   </li>
                 ))}
@@ -139,8 +139,8 @@ export default function AdminDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {myActions.map((a) => (
-          <Link key={a.to} to={a.to} className="rounded-xl border bg-white p-4 transition hover:border-emerald-400 hover:shadow">
-            <div className="font-semibold text-emerald-700">{a.title}</div>
+          <Link key={a.to} to={a.to} className="rounded-xl border border-blue-100 bg-white p-4 transition hover:border-blue-400 hover:shadow">
+            <div className="font-semibold text-blue-700">{a.title}</div>
             <div className="mt-1 text-sm text-slate-500">{a.desc}</div>
           </Link>
         ))}

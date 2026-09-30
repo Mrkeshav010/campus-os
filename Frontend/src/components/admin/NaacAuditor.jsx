@@ -45,21 +45,21 @@ export default function NaacAuditor() {
   const s = pack?.snapshot
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-emerald-50">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-amber-100 bg-amber-950 px-5 py-4 text-amber-50">
+    <section className="overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-sky-50 via-white to-blue-50">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-blue-900 bg-blue-950 px-5 py-4 text-blue-50">
         <div>
           <div className="text-[11px] uppercase tracking-[0.2em] text-amber-300">Unique IQAC module</div>
           <h2 className="text-lg font-bold">AI Government Auditor · NAAC Compliance Generator</h2>
-          <p className="mt-1 max-w-2xl text-xs text-amber-200">
+          <p className="mt-1 max-w-2xl text-xs text-blue-200">
             Pulls live Campus OS metrics (attendance, complaints, leave, certificates, staff) and drafts a 7-criterion
             NAAC self-study pack for IQAC rehearsal — not an official NAAC filing.
           </p>
         </div>
-        <div className="rounded-xl border border-amber-700 bg-amber-900/60 px-4 py-3 text-sm">
+        <div className="rounded-xl border border-blue-800 bg-blue-900/60 px-4 py-3 text-sm">
           <div className="flex items-center justify-between gap-6">
             <div>
-              <div className="text-[11px] uppercase tracking-wide text-amber-300">Offline sync switch</div>
-              <div className="text-xs text-amber-100">
+              <div className="text-[11px] uppercase tracking-wide text-blue-300">Offline sync switch</div>
+              <div className="text-xs text-blue-100">
                 {sync.online ? 'Browser online' : 'Browser offline'} · {sync.queued} queued write(s)
               </div>
             </div>
@@ -68,7 +68,7 @@ export default function NaacAuditor() {
               role="switch"
               aria-checked={sync.enabled}
               onClick={() => sync.toggle(!sync.enabled)}
-              className={`relative h-7 w-12 rounded-full transition ${sync.enabled ? 'bg-amber-400' : 'bg-slate-500'}`}
+              className={`relative h-7 w-12 rounded-full transition ${sync.enabled ? 'bg-sky-400' : 'bg-slate-500'}`}
             >
               <span
                 className={`absolute top-0.5 h-6 w-6 rounded-full bg-white transition ${
@@ -85,13 +85,13 @@ export default function NaacAuditor() {
         </div>
       </div>
 
-      {sync.toast && <div className="bg-amber-100 px-5 py-2 text-xs text-amber-900">{sync.toast}</div>}
+      {sync.toast && <div className="bg-blue-100 px-5 py-2 text-xs text-blue-900">{sync.toast}</div>}
 
       <div className="grid gap-5 p-5 lg:grid-cols-5">
         <div className="space-y-3 lg:col-span-2">
           <div className="flex flex-wrap gap-1.5">
             {CRITERIA.map((c) => (
-              <span key={c} className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] text-amber-900">
+              <span key={c} className="rounded-full border border-blue-200 bg-white px-2 py-0.5 text-[11px] text-blue-900">
                 {c}
               </span>
             ))}
@@ -101,19 +101,19 @@ export default function NaacAuditor() {
             value={focus}
             onChange={(e) => setFocus(e.target.value)}
             placeholder="Optional IQAC note (e.g. focus Criterion 2 & 5 for tomorrow's mock peer team)"
-            className="w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={run}
               disabled={busy}
-              className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-60"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {busy ? 'Auditing live data…' : 'Generate NAAC pack'}
             </button>
             {pack?.report && (
-              <button type="button" onClick={download} className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm">
+              <button type="button" onClick={download} className="rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm text-blue-800 hover:bg-blue-50">
                 Download .md
               </button>
             )}
@@ -129,7 +129,7 @@ export default function NaacAuditor() {
                 ['Pending leave', s.pendingLeave],
                 ['Issued certificates', s.issuedCertificates],
               ].map(([k, v]) => (
-                <div key={k} className="rounded-lg border bg-white px-3 py-2">
+                <div key={k} className="rounded-lg border border-blue-100 bg-white px-3 py-2">
                   <dt className="text-slate-400">{k}</dt>
                   <dd className="text-lg font-bold text-slate-800">{v}</dd>
                 </div>
@@ -143,7 +143,7 @@ export default function NaacAuditor() {
           )}
         </div>
         <div className="lg:col-span-3">
-          <div className="h-[28rem] overflow-y-auto rounded-xl border bg-white p-4 text-sm leading-relaxed whitespace-pre-wrap">
+          <div className="h-[28rem] overflow-y-auto rounded-xl border border-blue-100 bg-white p-4 text-sm leading-relaxed whitespace-pre-wrap">
             {pack?.report || 'Run the auditor to see a criterion-wise draft here. Judges can download it as Markdown.'}
           </div>
         </div>
