@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 
+const hodLinks = [
+  { to: '/admin/hod-attendance', title: 'Class attendance', desc: 'Daily, weekly, monthly report and student search' },
+  { to: '/admin/notices', title: 'Notices', desc: 'Post for teachers and students of your department' },
+  { to: '/admin/qr', title: 'Start attendance QR', desc: 'Take your own class' },
+  { to: '/admin/requests', title: 'Leave requests', desc: 'Approve or reject for your department' },
+]
+
 const Card = ({ label, value, active, onClick }) => (
   <button
     onClick={onClick}
@@ -147,6 +154,21 @@ export default function Overview() {
         </p>
       </div>
 
+      {isHod && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {hodLinks.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="rounded-xl border border-blue-100 bg-white p-4 transition hover:border-blue-400 hover:shadow"
+            >
+              <div className="font-semibold text-blue-700">{l.title}</div>
+              <div className="mt-1 text-sm text-slate-500">{l.desc}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>}
 
       {!data && !error && <div className="text-sm text-slate-500">Loading...</div>}
@@ -212,12 +234,6 @@ export default function Overview() {
                 </div>
               ))}
             </div>
-          )}
-
-          {isHod && (
-            <Link to="/admin/requests" className="inline-block text-sm font-medium text-emerald-700 underline">
-              Open leave requests of your department
-            </Link>
           )}
         </>
       )}

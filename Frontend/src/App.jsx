@@ -25,6 +25,7 @@ import ComplaintTracker from './pages/admin/ComplaintTracker'
 import CertificateQueue from './pages/admin/CertificateQueue'
 import NoticeManager from './pages/admin/NoticeManager'
 import FacultyNotices from './pages/admin/FacultyNotices'
+import HodNotices from './pages/admin/HodNotices'
 import UploadMaterial from './pages/admin/UploadMaterial'
 import FeeManager from './pages/admin/FeeManager'
 import MessManager from './pages/admin/MessManager'
@@ -57,10 +58,12 @@ function StaffHome() {
   return <AdminDashboard />
 }
 
-// Admin posts and deletes notices; faculty only read the ones meant for them
+// Admin posts/deletes all notices, HOD posts for own department, others only read
 function NoticesPage() {
   const { user } = useAuth()
-  return user.role === 'admin' ? <NoticeManager /> : <FacultyNotices />
+  if (user.role === 'admin') return <NoticeManager />
+  if (user.role === 'hod') return <HodNotices />
+  return <FacultyNotices />
 }
 
 export default function App() {

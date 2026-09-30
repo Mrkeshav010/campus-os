@@ -31,7 +31,7 @@ export default function FacultyNotices() {
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Notices</h1>
-        <p className="text-sm text-slate-500">Announcements from the admin for faculty.</p>
+        <p className="text-sm text-slate-500">Announcements from the admin and your department HOD.</p>
       </div>
 
       {loading ? (

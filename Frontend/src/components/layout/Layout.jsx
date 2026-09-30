@@ -28,6 +28,7 @@ const staffNav = [
   { to: '/admin/pending-staff', label: 'Pending Staff', roles: ['admin'] },
   { to: '/admin/departments', label: 'Departments', roles: ['admin'] },
   { to: '/admin/qr', label: 'Attendance QR', roles: CAN_QR },
+  { to: '/admin/hod-attendance', label: 'Class Attendance', roles: ['admin', 'hod'] },
   { to: '/admin/timetable', label: 'Timetable', roles: CAN_QR },
   { to: '/admin/requests', label: 'Leave Requests', roles: ['admin', 'warden', 'hod'] },
   { to: '/admin/complaints', label: 'Complaints', roles: ['admin', 'warden'] },

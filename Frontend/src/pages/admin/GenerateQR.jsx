@@ -4,9 +4,17 @@ import { createSession, getSessionAttendees } from '../../services/attendanceSer
 const inputCls =
   'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500'
 
+const fmtWhen = (t) => {
+  const d = new Date(t)
+  return `${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`
+}
+
 export default function GenerateQR() {
   const [form, setForm] = useState({ subject: '', year: '1', section: '' })
-  const [session, setSession] = useState(null) // { sessionId, qrImage, expiresAt, expiresInSeconds }
+  const [session, setSession] = useState(null) // { sessionId, qrImage, expiresAt, expiresInSeconds, label }
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [attendees, setAttendees] = useState({ count: 0, students: [] })
   const [error, setError] = useState('')
@@ -25,7 +33,7 @@ export default function GenerateQR() {
         section: form.section.trim(),
       })
       setAttendees({ count: 0, students: [] })
-      setSession(data)
+      setSession({ ...data, label: `${form.subject.trim()} · Year ${form.year} · Sec ${form.section.trim()}` })
     } catch (err) {
       setError(err.response?.data?.message || 'Could not create session')
     } finally {
@@ -102,7 +110,7 @@ export default function GenerateQR() {
 
         <p className="text-xs text-slate-400">
           Type the subject the same way every time. Regenerating for the same subject on the same day counts as
-          one class, so percentages stay correct.
+          one class, so percentages stay correct. The class is automatically recorded as taken by you.
         </p>
       </form>
 
@@ -138,6 +146,7 @@ export default function GenerateQR() {
             </div>
 
             <div>
+              <div className="text-xs text-slate-500">{session.label}</div>
               <div className="flex items-baseline justify-between">
                 <div className="font-semibold">Present so far</div>
                 <div className="text-2xl font-bold text-emerald-600">{attendees.count}</div>
@@ -147,9 +156,12 @@ export default function GenerateQR() {
                   <li className="text-slate-400">Waiting for students to scan...</li>
                 )}
                 {attendees.students.map((s, i) => (
-                  <li key={i} className="flex justify-between rounded bg-slate-50 px-3 py-1.5">
-                    <span>{s.name}</span>
-                    <span className="text-slate-500">{s.rollNumber}</span>
+                  <li key={i} className="flex items-center justify-between gap-2 rounded bg-slate-50 px-3 py-1.5">
+                    <div>
+                      <div className="font-medium">{s.name}</div>
+                      <div className="text-xs text-slate-500">Roll {s.rollNumber || '—'}</div>
+                    </div>
+                    <div className="text-right text-xs text-slate-500">{s.markedAt ? fmtWhen(s.markedAt) : ''}</div>
                   </li>
                 ))}
               </ul>

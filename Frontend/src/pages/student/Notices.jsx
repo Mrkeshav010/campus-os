@@ -31,7 +31,7 @@ export default function Notices() {
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Notices</h1>
-        <p className="text-sm text-slate-500">Only announcements meant for your year, branch and hostel show up here.</p>
+        <p className="text-sm text-slate-500">Only announcements meant for your year, section and department show up here.</p>
       </div>
 
       {loading ? (
@@ -49,6 +49,7 @@ export default function Notices() {
                 </span>
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{n.body}</p>
+              {n.postedBy?.name && <div className="mt-2 text-xs text-slate-400">Posted by {n.postedBy.name}</div>}
             </li>
           ))}
         </ul>

@@ -6,6 +6,18 @@ const { dayKey, sameSection, calculateAttendance } = require('../utils/attendanc
 
 const SESSION_EXPIRY_SECONDS = Number(process.env.QR_SESSION_EXPIRY_SECONDS) || 90;
 
+// ---------- helpers ----------
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isDateStr = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''));
+const dayStart = (str) => new Date(`${str}T00:00:00+05:30`); // IST midnight
+const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const deptRegexOf = (dept) => new RegExp(`^${escapeRegex(dept)}$`, 'i');
+const norm = (v) => String(v || '').trim().toLowerCase();
+const pct = (p, t) => (t ? Math.round((p / t) * 1000) / 10 : 0);
+// HOD: always own department (from token). Admin: ?branch=
+const getDept = (req) =>
+  String(req.user.role === 'admin' ? req.query.branch || '' : req.user.branch || '').trim();
+
 // POST /api/attendance/session   (faculty/admin only)
 const createSession = async (req, res, next) => {
   try {
@@ -40,7 +52,6 @@ const createSession = async (req, res, next) => {
 };
 
 // POST /api/attendance/mark   (student only)
-// studentId always comes from the JWT (req.user), never from the request body.
 const markAttendance = async (req, res, next) => {
   try {
     const { sessionCode } = req.body;
@@ -60,7 +71,6 @@ const markAttendance = async (req, res, next) => {
       return res.status(400).json({ message: 'Attendance already marked for this session' });
     }
 
-    // Also covers a regenerated QR for the same class on the same day
     const recent = await Attendance.find({
       student: req.user._id,
       subject: session.subject,
@@ -125,7 +135,6 @@ const getSessionAttendees = async (req, res, next) => {
 // POST /api/attendance/manual   (faculty/admin only) - fallback bulk mark
 const manualBulkMark = async (req, res, next) => {
   try {
-    // records = [{ studentId, subject, status }, ...]
     const { records } = req.body;
     if (!Array.isArray(records) || records.length === 0) {
       return res.status(400).json({ message: 'records array is required' });
@@ -146,104 +155,234 @@ const manualBulkMark = async (req, res, next) => {
   }
 };
 
-// GET /api/attendance/hod/today?date=YYYY-MM-DD&branch=MCA
-// HOD: sirf apne department. Admin: ?branch= se koi bhi department.
-const getHodDaySummary = async (req, res, next) => {
+// GET /api/attendance/hod/report?from=YYYY-MM-DD&to=YYYY-MM-DD[&branch=MCA for admin]
+// Day-wise classes of ONE department. Student name lists only when from === to.
+const getHodReport = async (req, res, next) => {
   try {
-    const IST_OFFSET = 5.5 * 60 * 60 * 1000;
-    const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '')
-      ? req.query.date
-      : new Date(Date.now() + IST_OFFSET).toISOString().slice(0, 10);
-    const start = new Date(`${dateStr}T00:00:00+05:30`);
-    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-
-    const dept = String(req.user.role === 'admin' ? req.query.branch || '' : req.user.branch || '').trim();
-    if (!dept) {
-      return res.status(400).json({ message: 'Department (branch) not set for this account' });
+    const today = dayKey(new Date());
+    const from = isDateStr(req.query.from) ? req.query.from : today;
+    const to = isDateStr(req.query.to) ? req.query.to : from;
+    if (to < from) {
+      return res.status(400).json({ message: '"To" date cannot be before "From" date' });
     }
-    const deptRegex = new RegExp(`^${dept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    if ((dayStart(to) - dayStart(from)) / DAY_MS > 92) {
+      return res.status(400).json({ message: 'Please select a range of 3 months or less' });
+    }
 
-    // 1) Aaj ke sessions, sirf is department ke teachers ke
+    const dept = getDept(req);
+    if (!dept) return res.status(400).json({ message: 'Department (branch) not set for this account' });
+    const re = deptRegexOf(dept);
+
+    const start = dayStart(from);
+    const end = new Date(dayStart(to).getTime() + DAY_MS);
+    const withLists = from === to;
+
+    // Sessions created by teachers of this department = classes taken by them
     const sessions = (
-      await AttendanceSession.find({ expiresAt: { $gte: start, $lt: end } })
+      await AttendanceSession.find({ createdAt: { $gte: start, $lt: end } })
         .populate('createdBy', 'name branch')
-        .sort({ expiresAt: 1 })
+        .sort({ createdAt: 1 })
         .lean()
-    ).filter((s) => s.createdBy?.branch && deptRegex.test(s.createdBy.branch));
+    ).filter((s) => s.createdBy?.branch && re.test(s.createdBy.branch));
 
-    if (sessions.length === 0) {
-      return res.status(200).json({ date: dateStr, department: dept, totals: { classes: 0, present: 0, absent: 0 }, classes: [] });
-    }
+    const empty = {
+      from,
+      to,
+      department: dept,
+      totals: { days: 0, classes: 0, present: 0, absent: 0, percentage: 0 },
+      days: [],
+    };
+    if (sessions.length === 0) return res.status(200).json(empty);
 
-    // 2) Department ke saare students + in sessions ki attendance
-    const students = await User.find({ role: 'student', branch: deptRegex, isActive: { $ne: false } })
+    const students = await User.find({ role: 'student', branch: re, isActive: { $ne: false } })
       .select('name rollNumber year section')
       .lean();
+
     const records = await Attendance.find({
-      session: { $in: sessions.map((s) => s._id) },
+      student: { $in: students.map((s) => s._id) },
       status: 'present',
+      date: { $gte: start, $lt: end },
     })
-      .select('student session')
+      .select('student subject date')
       .lean();
 
-    const sessionToGroup = {};
-    const groups = {};
+    // "day|subject" -> set of student ids present (QR and manual both counted)
+    const presentMap = new Map();
+    for (const r of records) {
+      const key = `${dayKey(r.date)}|${norm(r.subject)}`;
+      if (!presentMap.has(key)) presentMap.set(key, new Set());
+      presentMap.get(key).add(String(r.student));
+    }
 
-    // 3) Same subject+year+section ke multiple QR ko ek class maano
+    // Regenerated QR for same subject/year/section on the same day = ONE class
+    const groups = new Map();
     for (const s of sessions) {
-      const key = `${String(s.subject).trim().toLowerCase()}|${s.year}|${String(s.section).trim().toLowerCase()}`;
-      sessionToGroup[String(s._id)] = key;
-      if (!groups[key]) {
-        groups[key] = {
+      const date = dayKey(s.createdAt);
+      const key = `${date}|${norm(s.subject)}|${s.year}|${norm(s.section)}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          date,
           subject: s.subject,
           year: s.year,
           section: s.section,
-          teacher: s.createdBy?.name,
-          firstQrAt: s.expiresAt,
-          sessionIds: [],
-          presentIds: new Set(),
-        };
+          teacher: s.createdBy?.name || null,
+          time: s.createdAt,
+        });
       }
-      groups[key].sessionIds.push(String(s._id));
-    }
-    for (const r of records) {
-      const g = groups[sessionToGroup[String(r.session)]];
-      if (g) g.presentIds.add(String(r.student));
     }
 
-    const classes = Object.values(groups).map((g) => {
+    const byDay = new Map();
+    for (const g of groups.values()) {
       const classStudents = students.filter(
         (st) => st.year === g.year && sameSection(g.section, st.section)
       );
+      const presentSet = presentMap.get(`${g.date}|${norm(g.subject)}`) || new Set();
       const present = [];
       const absent = [];
       for (const st of classStudents) {
         const row = { userId: st._id, name: st.name, rollNumber: st.rollNumber };
-        (g.presentIds.has(String(st._id)) ? present : absent).push(row);
+        (presentSet.has(String(st._id)) ? present : absent).push(row);
       }
-      return {
+      const cls = {
         subject: g.subject,
         year: g.year,
         section: g.section,
         teacher: g.teacher,
-        time: g.firstQrAt,
+        time: g.time,
         totalStudents: classStudents.length,
         presentCount: present.length,
         absentCount: absent.length,
-        present,
-        absent,
       };
-    });
+      if (withLists) {
+        cls.present = present;
+        cls.absent = absent;
+      }
+      if (!byDay.has(g.date)) byDay.set(g.date, []);
+      byDay.get(g.date).push(cls);
+    }
 
-    res.status(200).json({
-      date: dateStr,
-      department: dept,
-      totals: {
-        classes: classes.length,
+    const days = [...byDay.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([date, classes]) => ({
+        date,
+        classes: classes.sort((a, b) => new Date(a.time) - new Date(b.time)),
         present: classes.reduce((a, c) => a + c.presentCount, 0),
         absent: classes.reduce((a, c) => a + c.absentCount, 0),
+      }));
+
+    const present = days.reduce((a, d) => a + d.present, 0);
+    const absent = days.reduce((a, d) => a + d.absent, 0);
+
+    res.status(200).json({
+      from,
+      to,
+      department: dept,
+      totals: {
+        days: days.length,
+        classes: days.reduce((a, d) => a + d.classes.length, 0),
+        present,
+        absent,
+        percentage: pct(present, present + absent),
       },
-      classes,
+      days,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/attendance/hod/student?roll=45[&branch=MCA for admin]
+// One student's full attendance. Only students of the HOD's own department.
+const getHodStudent = async (req, res, next) => {
+  try {
+    const dept = getDept(req);
+    if (!dept) return res.status(400).json({ message: 'Department (branch) not set for this account' });
+    const roll = String(req.query.roll || '').trim();
+    if (!roll) return res.status(400).json({ message: 'Roll number is required' });
+
+    const re = deptRegexOf(dept);
+    const student = await User.findOne({
+      role: 'student',
+      rollNumber: new RegExp(`^${escapeRegex(roll)}$`, 'i'),
+      branch: re,
+    })
+      .select('name email rollNumber year section branch')
+      .lean();
+
+    if (!student) {
+      return res.status(404).json({ message: 'No student with this roll number in your department' });
+    }
+
+    const sessions = (
+      await AttendanceSession.find({ year: student.year })
+        .populate('createdBy', 'name branch')
+        .lean()
+    ).filter(
+      (s) => sameSection(s.section, student.section) && s.createdBy?.branch && re.test(s.createdBy.branch)
+    );
+    const records = await Attendance.find({ student: student._id }).select('subject date status').lean();
+
+    // One entry per "subject on one day"
+    const held = new Map();
+    for (const s of sessions) {
+      const date = dayKey(s.createdAt);
+      const key = `${date}|${norm(s.subject)}`;
+      if (!held.has(key)) {
+        held.set(key, {
+          date,
+          subject: s.subject,
+          teacher: s.createdBy?.name || null,
+          time: s.createdAt,
+          status: 'absent',
+        });
+      }
+    }
+    for (const r of records) {
+      const date = dayKey(r.date);
+      const key = `${date}|${norm(r.subject)}`;
+      let h = held.get(key);
+      if (!h) {
+        h = { date, subject: r.subject, teacher: null, time: r.date, status: 'absent' };
+        held.set(key, h);
+      }
+      if (r.status === 'present') {
+        h.status = 'present';
+        h.markedAt = r.date;
+      }
+    }
+
+    const history = [...held.values()].sort(
+      (a, b) => b.date.localeCompare(a.date) || new Date(b.time) - new Date(a.time)
+    );
+
+    const bySubject = new Map();
+    for (const h of history) {
+      const k = norm(h.subject);
+      if (!bySubject.has(k)) bySubject.set(k, { subject: h.subject, total: 0, present: 0 });
+      const row = bySubject.get(k);
+      row.total += 1;
+      if (h.status === 'present') row.present += 1;
+    }
+    const subjects = [...bySubject.values()]
+      .map((r) => ({ ...r, absent: r.total - r.present, percentage: pct(r.present, r.total) }))
+      .sort((a, b) => a.subject.localeCompare(b.subject));
+
+    const total = history.length;
+    const present = history.filter((h) => h.status === 'present').length;
+
+    res.status(200).json({
+      student: {
+        userId: student._id,
+        name: student.name,
+        rollNumber: student.rollNumber,
+        email: student.email,
+        year: student.year,
+        section: student.section,
+        branch: student.branch,
+      },
+      overall: { total, present, absent: total - present, percentage: pct(present, total) },
+      subjects,
+      history,
     });
   } catch (error) {
     next(error);
@@ -256,5 +395,6 @@ module.exports = {
   getMyAttendancePercentage,
   getSessionAttendees,
   manualBulkMark,
-  getHodDaySummary,
+  getHodReport,
+  getHodStudent,
 };
