@@ -16,6 +16,7 @@ import Certificates from './pages/student/Certificates'
 import Notices from './pages/student/Notices'
 import Materials from './pages/student/Materials'
 import FeeQueries from './pages/student/FeeQueries'
+import StudentMess from './pages/student/Mess'
 import AdminDashboard from './pages/admin/Dashboard'
 import GenerateQR from './pages/admin/GenerateQR'
 import Timetable from './pages/admin/Timetable'
@@ -26,6 +27,7 @@ import NoticeManager from './pages/admin/NoticeManager'
 import FacultyNotices from './pages/admin/FacultyNotices'
 import UploadMaterial from './pages/admin/UploadMaterial'
 import FeeManager from './pages/admin/FeeManager'
+import MessManager from './pages/admin/MessManager'
 import PendingStaff from './pages/admin/PendingStaff'
 import DepartmentManager from './pages/admin/DepartmentManager'
 import Overview from './pages/admin/Overview'
@@ -91,6 +93,7 @@ export default function App() {
         <Route path="notices" element={<Notices />} />
         <Route path="materials" element={<Materials />} />
         <Route path="fee-queries" element={<FeeQueries />} />
+        <Route path="mess" element={<StudentMess />} />
         <Route path="assistant" element={<Assistant />} />
         <Route path="*" element={<ComingSoon />} />
       </Route>
@@ -115,6 +118,7 @@ export default function App() {
         <Route path="notices" element={<Staff roles={NOTICE_ROLES}><NoticesPage /></Staff>} />
         <Route path="materials" element={<Staff roles={UPLOAD_ROLES}><UploadMaterial /></Staff>} />
         <Route path="fee-queries" element={<Staff roles={['admin', 'accounts']}><FeeManager /></Staff>} />
+        <Route path="mess" element={<Staff roles={['warden']}><MessManager /></Staff>} />
         <Route path="*" element={<ComingSoon />} />
       </Route>
 

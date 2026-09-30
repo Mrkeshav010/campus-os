@@ -1,70 +1,57 @@
-const MessMenu = require('../models/MessMenu');
+const MessDay = require('../models/MessDay');
 
-// POST /api/mess   (admin only) - set/update a day's menu
-const upsertDayMenu = async (req, res, next) => {
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const MEALS = ['breakfast', 'lunch', 'dinner'];
+
+const cleanMeal = (m) => ({
+  items: String(m?.items || '').trim().slice(0, 300),
+  time: String(m?.time || '').trim().slice(0, 40),
+});
+
+// GET /api/mess   (student + warden) - always returns all 7 days
+const getMenu = async (req, res, next) => {
   try {
-    const { day, breakfast, lunch, dinner } = req.body;
+    const docs = (await MessDay.find()).map((d) => d.toObject());
+    const byDay = Object.fromEntries(docs.map((d) => [d.day, d]));
+    const blank = { items: '', time: '' };
 
-    const menu = await MessMenu.findOneAndUpdate(
-      { day },
-      { day, breakfast, lunch, dinner },
-      { new: true, upsert: true }
-    );
+    const menu = DAYS.map((day) => ({
+      day,
+      breakfast: byDay[day]?.breakfast || blank,
+      lunch: byDay[day]?.lunch || blank,
+      dinner: byDay[day]?.dinner || blank,
+    }));
 
-    res.status(200).json({ message: 'Menu saved', menu });
+    const updatedAt = docs.reduce((latest, d) => (!latest || d.updatedAt > latest ? d.updatedAt : latest), null);
+    res.status(200).json({ menu, updatedAt });
   } catch (error) {
     next(error);
   }
 };
 
-// GET /api/mess   (everyone) - full week's menu
-const getWeekMenu = async (req, res, next) => {
+// PUT /api/mess   (warden only) body: { menu: [{ day, breakfast, lunch, dinner }] }
+const saveMenu = async (req, res, next) => {
   try {
-    const menu = await MessMenu.find().sort({ day: 1 });
-    res.status(200).json({ menu });
+    const incoming = req.body?.menu;
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return res.status(400).json({ message: 'Menu is required' });
+    }
+
+    const ops = [];
+    for (const entry of incoming) {
+      if (!DAYS.includes(entry?.day)) {
+        return res.status(400).json({ message: 'Invalid day in menu' });
+      }
+      const set = { updatedBy: req.user._id };
+      for (const meal of MEALS) set[meal] = cleanMeal(entry[meal]);
+      ops.push({ updateOne: { filter: { day: entry.day }, update: { $set: set }, upsert: true } });
+    }
+
+    await MessDay.bulkWrite(ops);
+    res.status(200).json({ message: 'Mess menu updated' });
   } catch (error) {
     next(error);
   }
 };
 
-// POST /api/mess/:day/rate   (student only)
-const rateMeal = async (req, res, next) => {
-  try {
-    const { meal, rating } = req.body; // meal: 'breakfast' | 'lunch' | 'dinner'
-
-    const menu = await MessMenu.findOneAndUpdate(
-      { day: req.params.day },
-      { $push: { ratings: { student: req.user.id, meal, rating } } },
-      { new: true }
-    );
-
-    if (!menu) return res.status(404).json({ message: 'Menu for this day not found' });
-    res.status(200).json({ message: 'Rating submitted' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// GET /api/mess/analytics   (admin only) - average rating per meal
-const getMessAnalytics = async (req, res, next) => {
-  try {
-    const menus = await MessMenu.find();
-    const breakdown = menus.map((m) => {
-      const avg = (meal) => {
-        const ratings = m.ratings.filter((r) => r.meal === meal).map((r) => r.rating);
-        return ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : null;
-      };
-      return {
-        day: m.day,
-        breakfastAvg: avg('breakfast'),
-        lunchAvg: avg('lunch'),
-        dinnerAvg: avg('dinner'),
-      };
-    });
-    res.status(200).json({ breakdown });
-  } catch (error) {
-    next(error);
-  }
-};
-
-module.exports = { upsertDayMenu, getWeekMenu, rateMeal, getMessAnalytics };
+module.exports = { getMenu, saveMenu };

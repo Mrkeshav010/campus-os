@@ -35,7 +35,7 @@ const staffNav = [
   { to: '/admin/notices', label: 'Notices', roles: ['admin', 'teacher', 'hod', 'faculty'] },
   { to: '/admin/materials', label: 'Study Material', roles: ['admin', 'teacher', 'hod', 'faculty'] },
   { to: '/admin/fee-queries', label: 'Fee Queries', roles: ['admin', 'accounts'] },
-  { to: '/admin/mess', label: 'Mess Menu', roles: ['admin'] },
+  { to: '/admin/mess', label: 'Mess Menu', roles: ['warden'] },
 ]
 
 const themes = {

@@ -13,7 +13,7 @@ const actions = [
   { to: '/admin/notices', title: 'Post a notice', desc: 'Target a year, branch or hostel', roles: ['admin'] },
   { to: '/admin/fee-queries', title: 'Fee queries', desc: 'Reply to student tickets', roles: ['admin'] },
   { to: '/admin/timetable', title: 'Timetable', desc: 'Manage slots with clash detection', roles: ['admin', 'faculty'] },
-  { to: '/admin/mess', title: 'Mess menu', desc: 'Weekly menu and ratings', roles: ['admin'] },
+  { to: '/admin/mess', title: 'Mess menu', desc: 'Update breakfast, lunch and dinner for each day', roles: ['warden'] },
 ]
 
 function Stat({ label, value, to, tone = 'text-slate-800' }) {
