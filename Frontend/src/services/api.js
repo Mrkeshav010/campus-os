@@ -12,7 +12,9 @@ api.interceptors.request.use((config) => {
 
   const method = (config.method || 'get').toLowerCase()
   const mutating = ['post', 'put', 'patch', 'delete'].includes(method)
-  if (mutating && isOfflineWriteMode() && !config.url?.includes('/ai/')) {
+  // AI and exam requests must never be queued offline (they need the server live)
+  const neverQueue = config.url?.includes('/ai/') || config.url?.includes('/exams')
+  if (mutating && isOfflineWriteMode() && !neverQueue) {
     enqueueOfflineWrite(config)
     const err = new Error('Queued locally — Offline Sync is ON')
     err.isOfflineQueue = true

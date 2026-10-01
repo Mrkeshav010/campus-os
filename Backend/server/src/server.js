@@ -25,6 +25,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const overviewRoutes = require('./routes/overviewRoutes');
 const materialRoutes = require('./routes/materialRoutes');
+const examRoutes = require('./routes/examRoutes');
+const { startExamSweeper } = require('./controllers/examController');
 
 const app = express();
 
@@ -59,6 +61,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/overview', overviewRoutes);
 app.use('/api/materials', materialRoutes);
+app.use('/api/exams', examRoutes);
 
 // --- Error handling (must be last) ---
 app.use(notFound);
@@ -73,5 +76,6 @@ const PORT = process.env.PORT || 5000;
 connectDB().then(() => {
   httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    startExamSweeper(); // auto-submits exams whose time is over
   });
 });

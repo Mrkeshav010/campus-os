@@ -12,6 +12,8 @@ const studentNav = [
   { to: '/student/certificates', label: 'Certificates' },
   { to: '/student/notices', label: 'Notices' },
   { to: '/student/materials', label: 'Class Updates' },
+  { to: '/student/exams', label: 'Exams' },
+  { to: '/student/results', label: 'Results' },
   { to: '/student/fee-queries', label: 'Fee Queries' },
   { to: '/student/mess', label: 'Mess Menu' },
   { to: '/student/lost-found', label: 'Lost & Found' },
@@ -35,6 +37,7 @@ const staffNav = [
   { to: '/admin/certificates', label: 'Certificates', roles: ['admin'] },
   { to: '/admin/notices', label: 'Notices', roles: ['admin', 'teacher', 'hod', 'faculty'] },
   { to: '/admin/materials', label: 'Study Material', roles: ['admin', 'teacher', 'hod', 'faculty'] },
+  { to: '/admin/exams', label: 'Class Tests', roles: ['admin', 'teacher', 'hod', 'faculty'] },
   { to: '/admin/fee-queries', label: 'Fee Queries', roles: ['admin', 'accounts'] },
   { to: '/admin/mess', label: 'Mess Menu', roles: ['warden'] },
 ]

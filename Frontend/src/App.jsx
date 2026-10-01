@@ -17,6 +17,9 @@ import Notices from './pages/student/Notices'
 import Materials from './pages/student/Materials'
 import FeeQueries from './pages/student/FeeQueries'
 import StudentMess from './pages/student/Mess'
+import StudentExams from './pages/student/Exams'
+import TakeExam from './pages/student/TakeExam'
+import StudentResults from './pages/student/Results'
 import AdminDashboard from './pages/admin/Dashboard'
 import GenerateQR from './pages/admin/GenerateQR'
 import Timetable from './pages/admin/Timetable'
@@ -34,6 +37,9 @@ import DepartmentManager from './pages/admin/DepartmentManager'
 import Overview from './pages/admin/Overview'
 import StaffWelcome from './pages/admin/StaffWelcome'
 import HodAttendance from './pages/admin/HodAttendance'
+import ExamManager from './pages/admin/ExamManager'
+import ExamSubmissions from './pages/admin/ExamSubmissions'
+import ExamReview from './pages/admin/ExamReview'
 
 // Shown for any module page that hasn't been built yet
 const ComingSoon = () => (
@@ -49,6 +55,7 @@ const ALL_STAFF = ['admin', 'warden', 'faculty', 'teacher', 'hod', 'principal', 
 const CAN_QR = ['admin', 'faculty', 'teacher', 'hod']
 const NOTICE_ROLES = ['admin', 'teacher', 'hod', 'faculty']
 const UPLOAD_ROLES = ['admin', 'teacher', 'hod', 'faculty']
+const EXAM_ROLES = ['admin', 'teacher', 'hod', 'faculty']
 
 // The first screen after login depends on the role
 function StaffHome() {
@@ -98,6 +105,9 @@ export default function App() {
         <Route path="materials" element={<Materials />} />
         <Route path="fee-queries" element={<FeeQueries />} />
         <Route path="mess" element={<StudentMess />} />
+        <Route path="exams" element={<StudentExams />} />
+        <Route path="exams/:id/take" element={<TakeExam />} />
+        <Route path="results" element={<StudentResults />} />
         <Route path="assistant" element={<Assistant />} />
         <Route path="*" element={<ComingSoon />} />
       </Route>
@@ -122,6 +132,9 @@ export default function App() {
         <Route path="certificates" element={<Staff roles={['admin']}><CertificateQueue /></Staff>} />
         <Route path="notices" element={<Staff roles={NOTICE_ROLES}><NoticesPage /></Staff>} />
         <Route path="materials" element={<Staff roles={UPLOAD_ROLES}><UploadMaterial /></Staff>} />
+        <Route path="exams" element={<Staff roles={EXAM_ROLES}><ExamManager /></Staff>} />
+        <Route path="exams/attempt/:attemptId" element={<Staff roles={EXAM_ROLES}><ExamReview /></Staff>} />
+        <Route path="exams/:id" element={<Staff roles={EXAM_ROLES}><ExamSubmissions /></Staff>} />
         <Route path="fee-queries" element={<Staff roles={['admin', 'accounts']}><FeeManager /></Staff>} />
         <Route path="mess" element={<Staff roles={['warden']}><MessManager /></Staff>} />
         <Route path="*" element={<ComingSoon />} />
