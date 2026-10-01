@@ -20,6 +20,8 @@ import StudentMess from './pages/student/Mess'
 import StudentExams from './pages/student/Exams'
 import TakeExam from './pages/student/TakeExam'
 import StudentResults from './pages/student/Results'
+import Events from './pages/student/Events' // NEW
+import EventRegister from './pages/student/EventRegister' // NEW
 import AdminDashboard from './pages/admin/Dashboard'
 import GenerateQR from './pages/admin/GenerateQR'
 import Timetable from './pages/admin/Timetable'
@@ -40,6 +42,9 @@ import HodAttendance from './pages/admin/HodAttendance'
 import ExamManager from './pages/admin/ExamManager'
 import ExamSubmissions from './pages/admin/ExamSubmissions'
 import ExamReview from './pages/admin/ExamReview'
+import OrganizerDashboard from './pages/organizer/OrganizerDashboard' // NEW
+import EventForm from './pages/organizer/EventForm' // NEW
+import EventRegistrations from './pages/organizer/EventRegistrations' // NEW
 
 // Shown for any module page that hasn't been built yet
 const ComingSoon = () => (
@@ -56,6 +61,8 @@ const CAN_QR = ['admin', 'faculty', 'teacher', 'hod']
 const NOTICE_ROLES = ['admin', 'teacher', 'hod', 'faculty']
 const UPLOAD_ROLES = ['admin', 'teacher', 'hod', 'faculty']
 const EXAM_ROLES = ['admin', 'teacher', 'hod', 'faculty']
+const EVENT_VIEW_ROLES = ['admin', 'teacher', 'hod', 'faculty'] // NEW
+const ORGANIZER_ROLES = ['organizer', 'admin'] // NEW
 
 // The first screen after login depends on the role
 function StaffHome() {
@@ -75,7 +82,13 @@ function NoticesPage() {
 
 export default function App() {
   const { user } = useAuth()
-  const home = !user ? '/login' : user.role === 'student' ? '/student' : '/admin'
+  const home = !user
+    ? '/login'
+    : user.role === 'student'
+      ? '/student'
+      : user.role === 'organizer'
+        ? '/organizer' // NEW
+        : '/admin'
 
   return (
     <Routes>
@@ -102,6 +115,8 @@ export default function App() {
         <Route path="complaints" element={<Complaints />} />
         <Route path="certificates" element={<Certificates />} />
         <Route path="notices" element={<Notices />} />
+        <Route path="events" element={<Events />} /> {/* NEW */}
+        <Route path="events/:id/register" element={<EventRegister />} /> {/* NEW */}
         <Route path="materials" element={<Materials />} />
         <Route path="fee-queries" element={<FeeQueries />} />
         <Route path="mess" element={<StudentMess />} />
@@ -109,6 +124,22 @@ export default function App() {
         <Route path="exams/:id/take" element={<TakeExam />} />
         <Route path="results" element={<StudentResults />} />
         <Route path="assistant" element={<Assistant />} />
+        <Route path="*" element={<ComingSoon />} />
+      </Route>
+
+      {/* NEW: organizer dashboard (admin can also open it) */}
+      <Route
+        path="/organizer"
+        element={
+          <ProtectedRoute roles={ORGANIZER_ROLES}>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<OrganizerDashboard />} />
+        <Route path="events/new" element={<EventForm />} />
+        <Route path="events/:id/edit" element={<EventForm />} />
+        <Route path="events/:id/registrations" element={<EventRegistrations />} />
         <Route path="*" element={<ComingSoon />} />
       </Route>
 
@@ -131,6 +162,7 @@ export default function App() {
         <Route path="complaints" element={<Staff roles={['admin', 'warden']}><ComplaintTracker /></Staff>} />
         <Route path="certificates" element={<Staff roles={['admin']}><CertificateQueue /></Staff>} />
         <Route path="notices" element={<Staff roles={NOTICE_ROLES}><NoticesPage /></Staff>} />
+        <Route path="events" element={<Staff roles={EVENT_VIEW_ROLES}><Events /></Staff>} /> {/* NEW */}
         <Route path="materials" element={<Staff roles={UPLOAD_ROLES}><UploadMaterial /></Staff>} />
         <Route path="exams" element={<Staff roles={EXAM_ROLES}><ExamManager /></Staff>} />
         <Route path="exams/attempt/:attemptId" element={<Staff roles={EXAM_ROLES}><ExamReview /></Staff>} />

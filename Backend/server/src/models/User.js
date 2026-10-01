@@ -12,6 +12,7 @@ const ROLES = [
   'admin',
   'faculty',
   'warden',
+  'organizer',
 ];
 
 const userSchema = new mongoose.Schema(
@@ -26,6 +27,7 @@ const userSchema = new mongoose.Schema(
     branch: { type: String, trim: true }, // this is the DEPARTMENT (MCA, MBA...)
     section: { type: String, trim: true },
     hostelBlock: { type: String, trim: true },
+    designation: { type: String, trim: true }, // organizers only: "Cultural Head" etc.
     isActive: { type: Boolean, default: true },
 
     // Staff accounts start as 'pending' and cannot log in until admin approves.

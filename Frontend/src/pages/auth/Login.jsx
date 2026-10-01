@@ -20,7 +20,8 @@ export default function Login() {
     setLoading(true)
     try {
       const user = await login(form.identifier.trim(), form.password)
-      navigate(user.role === 'student' ? '/student' : '/admin')
+      // NEW: organizer ko apne dashboard par bhejna
+      navigate(user.role === 'student' ? '/student' : user.role === 'organizer' ? '/organizer' : '/admin')
     } catch (err) {
       setPending(Boolean(err.response?.data?.pending))
       setError(err.response?.data?.message || 'Login failed. Is the server running?')

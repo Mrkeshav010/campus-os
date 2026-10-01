@@ -8,6 +8,7 @@ const roleLabel = {
   vice_principal: 'Vice Principal',
   accounts: 'Accounts / Fees',
   warden: 'Warden',
+  organizer: 'Organizer',
 }
 
 export default function PendingStaff() {
@@ -75,6 +76,7 @@ export default function PendingStaff() {
                 <div className="text-right text-sm">
                   <div className="font-medium">{roleLabel[s.role] || s.role}</div>
                   {s.branch && <div className="text-xs text-slate-500">Dept: {s.branch}</div>}
+                  {s.designation && <div className="text-xs text-slate-500">{s.designation}</div>}
                 </div>
               </div>
 

@@ -11,6 +11,7 @@ const studentNav = [
   { to: '/student/complaints', label: 'Complaints' },
   { to: '/student/certificates', label: 'Certificates' },
   { to: '/student/notices', label: 'Notices' },
+  { to: '/student/events', label: 'Events' }, // NEW
   { to: '/student/materials', label: 'Class Updates' },
   { to: '/student/exams', label: 'Exams' },
   { to: '/student/results', label: 'Results' },
@@ -18,6 +19,12 @@ const studentNav = [
   { to: '/student/mess', label: 'Mess Menu' },
   { to: '/student/lost-found', label: 'Lost & Found' },
   { to: '/student/assistant', label: 'AI Assistant' },
+]
+
+// NEW: organizer ka menu
+const organizerNav = [
+  { to: '/organizer', label: 'My Events', end: true },
+  { to: '/organizer/events/new', label: 'Post Event' },
 ]
 
 const ALL_STAFF = ['admin', 'warden', 'faculty', 'teacher', 'hod', 'principal', 'vice_principal', 'accounts']
@@ -36,6 +43,8 @@ const staffNav = [
   { to: '/admin/complaints', label: 'Complaints', roles: ['admin', 'warden'] },
   { to: '/admin/certificates', label: 'Certificates', roles: ['admin'] },
   { to: '/admin/notices', label: 'Notices', roles: ['admin', 'teacher', 'hod', 'faculty'] },
+  { to: '/admin/events', label: 'Events', roles: ['admin', 'teacher', 'hod', 'faculty'] }, // NEW
+  { to: '/organizer', label: 'Organizer Panel', roles: ['admin'] }, // NEW
   { to: '/admin/materials', label: 'Study Material', roles: ['admin', 'teacher', 'hod', 'faculty'] },
   { to: '/admin/exams', label: 'Class Tests', roles: ['admin', 'teacher', 'hod', 'faculty'] },
   { to: '/admin/fee-queries', label: 'Fee Queries', roles: ['admin', 'accounts'] },
@@ -55,6 +64,13 @@ const themes = {
     badge: 'bg-sky-100 text-sky-700',
     title: 'Admin Console',
   },
+  // NEW
+  organizer: {
+    side: 'bg-indigo-900',
+    active: 'bg-indigo-500',
+    badge: 'bg-indigo-100 text-indigo-700',
+    title: 'Organizer Panel',
+  },
 }
 
 export default function Layout() {
@@ -64,8 +80,13 @@ export default function Layout() {
   const [open, setOpen] = useState(false)
 
   const isStudent = user.role === 'student'
-  const theme = isStudent ? themes.student : themes.staff
-  const items = isStudent ? studentNav : staffNav.filter((i) => i.roles.includes(user.role))
+  const isOrganizer = user.role === 'organizer' // NEW
+  const theme = isStudent ? themes.student : isOrganizer ? themes.organizer : themes.staff
+  const items = isStudent
+    ? studentNav
+    : isOrganizer
+      ? organizerNav
+      : staffNav.filter((i) => i.roles.includes(user.role))
 
   const handleLogout = async () => {
     await push.detach()
@@ -114,7 +135,8 @@ export default function Layout() {
           </button>
           <span className={`hidden rounded-full px-3 py-1 text-xs font-medium capitalize md:inline-block ${theme.badge}`}>
             {user.role.replace('_', ' ')}
-            {!isStudent && user.branch ? ` · ${user.branch}` : ''}
+            {isOrganizer && user.designation ? ` · ${user.designation}` : ''}
+            {!isStudent && !isOrganizer && user.branch ? ` · ${user.branch}` : ''}
           </span>
 
           <div className="flex items-center gap-2">

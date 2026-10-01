@@ -26,6 +26,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 const overviewRoutes = require('./routes/overviewRoutes');
 const materialRoutes = require('./routes/materialRoutes');
 const examRoutes = require('./routes/examRoutes');
+const eventRoutes = require('./routes/eventRoutes'); // NEW
 const { startExamSweeper } = require('./controllers/examController');
 
 const app = express();
@@ -62,6 +63,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/overview', overviewRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/exams', examRoutes);
+app.use('/api/events', eventRoutes); // NEW
 
 // --- Error handling (must be last) ---
 app.use(notFound);

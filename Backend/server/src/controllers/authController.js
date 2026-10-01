@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Department = require('../models/Department');
 
-const STAFF_ROLES = ['teacher', 'hod', 'principal', 'vice_principal', 'accounts', 'warden'];
+const STAFF_ROLES = ['teacher', 'hod', 'principal', 'vice_principal', 'accounts', 'warden', 'organizer'];
 const DEPT_ROLES = ['teacher', 'hod']; // these must belong to a department
 
 const generateToken = (userId) =>
@@ -15,10 +15,12 @@ const userPayload = (user) => ({
   name: user.name,
   email: user.email,
   role: user.role,
+  phone: user.phone,
   year: user.year,
   branch: user.branch,
   section: user.section,
   rollNumber: user.rollNumber,
+  designation: user.designation,
 });
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -35,9 +37,9 @@ const resolveDepartment = async (name) => {
 };
 
 // POST /api/auth/register
-// - student: opens immediately (roll-number + OTP flow replaces this in the next batch)
+// - student: opens immediately
 // - admin: needs ADMIN_SETUP_KEY, opens immediately
-// - every other staff role: account is created as "pending", NO token is returned
+// - every other staff role (incl. organizer): created as "pending", NO token is returned
 const register = async (req, res, next) => {
   try {
     const { name, password, role, phone, rollNumber, year, section, hostelBlock, adminKey } = req.body;
@@ -74,6 +76,13 @@ const register = async (req, res, next) => {
         branch = await resolveDepartment(req.body.branch);
         if (!branch) return res.status(400).json({ message: 'Please choose a valid department' });
       }
+      let designation;
+      if (requestedRole === 'organizer') {
+        designation = String(req.body.designation || '').trim();
+        if (!designation) {
+          return res.status(400).json({ message: 'Please enter your designation (e.g. Cultural Head)' });
+        }
+      }
       await User.create({
         name,
         email,
@@ -81,6 +90,7 @@ const register = async (req, res, next) => {
         role: requestedRole,
         phone,
         branch,
+        designation,
         approvalStatus: 'pending',
       });
       return res.status(201).json({
@@ -106,6 +116,7 @@ const register = async (req, res, next) => {
       email,
       password,
       role: 'student',
+      phone,
       rollNumber: roll,
       year,
       branch,
@@ -119,7 +130,6 @@ const register = async (req, res, next) => {
 };
 
 // POST /api/auth/login   body: { identifier, password }  (identifier = email OR roll number)
-// "email" is still accepted so the old frontend keeps working.
 const login = async (req, res, next) => {
   try {
     const { password } = req.body;

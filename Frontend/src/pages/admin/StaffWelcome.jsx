@@ -6,8 +6,13 @@ const links = {
     ['/admin/qr', 'Generate attendance QR'],
     ['/admin/timetable', 'Timetable'],
     ['/admin/materials', 'Upload notes / assignment'],
+    ['/admin/events', 'Events'],
   ],
   accounts: [['/admin/fee-queries', 'Fee queries']],
+  organizer: [
+    ['/organizer', 'My events'],
+    ['/organizer/events/new', 'Post a new event'],
+  ],
 }
 
 export default function StaffWelcome() {
@@ -20,6 +25,7 @@ export default function StaffWelcome() {
         <h1 className="text-2xl font-bold">Welcome, {user.name}</h1>
         <p className="text-sm capitalize text-slate-500">
           {user.role.replace('_', ' ')}
+          {user.designation ? ` · ${user.designation}` : ''}
           {user.branch ? ` · ${user.branch}` : ''}
         </p>
       </div>

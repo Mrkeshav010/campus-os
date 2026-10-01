@@ -13,6 +13,7 @@ const staffRoles = [
   ['vice_principal', 'Vice Principal'],
   ['accounts', 'Accounts / Fees'],
   ['warden', 'Warden'],
+  ['organizer', 'Organizer (Cultural Head, Club Head...)'],
   ['admin', 'Admin (needs setup key)'],
 ]
 const needsDepartment = ['teacher', 'hod']
@@ -33,6 +34,7 @@ export default function Register() {
     section: '',
     hostelBlock: '',
     role: 'teacher',
+    designation: '',
     adminKey: '',
   })
   const [error, setError] = useState('')
@@ -59,12 +61,14 @@ export default function Register() {
         payload.role = form.role
         if (form.phone) payload.phone = form.phone
         if (needsDepartment.includes(form.role)) payload.branch = form.branch
+        if (form.role === 'organizer') payload.designation = form.designation
         if (form.role === 'admin') payload.adminKey = form.adminKey
       } else {
         payload.rollNumber = form.rollNumber
         payload.year = Number(form.year)
         payload.branch = form.branch
         payload.section = form.section
+        if (form.phone) payload.phone = form.phone
         if (form.hostelBlock) payload.hostelBlock = form.hostelBlock
       }
 
@@ -133,6 +137,7 @@ export default function Register() {
         {!isStaff && (
           <>
             <input name="rollNumber" required placeholder="Roll number" className={inputCls} value={form.rollNumber} onChange={set} />
+            <input name="phone" placeholder="Phone (used for event registrations)" className={inputCls} value={form.phone} onChange={set} />
             {deptSelect}
             <div className="grid grid-cols-2 gap-2">
               <select name="year" className={inputCls} value={form.year} onChange={set}>
@@ -157,6 +162,16 @@ export default function Register() {
               ))}
             </select>
             {needsDepartment.includes(form.role) && deptSelect}
+            {form.role === 'organizer' && (
+              <input
+                name="designation"
+                required
+                placeholder="Designation (e.g. Cultural Head)"
+                className={inputCls}
+                value={form.designation}
+                onChange={set}
+              />
+            )}
             <input name="phone" placeholder="Phone (optional)" className={inputCls} value={form.phone} onChange={set} />
             {form.role === 'admin' ? (
               <>
@@ -175,7 +190,7 @@ export default function Register() {
 
         <label className="flex items-center gap-2 text-sm text-slate-600">
           <input type="checkbox" checked={isStaff} onChange={(e) => setIsStaff(e.target.checked)} />
-          I am staff (teacher / HOD / principal / accounts...)
+          I am staff (teacher / HOD / organizer / accounts...)
         </label>
 
         <button
