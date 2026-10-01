@@ -12,8 +12,8 @@ const { allowRoles } = require('../middleware/role');
 
 router.post('/', protect, allowRoles('student'), createFeeQuery);
 router.get('/my', protect, allowRoles('student'), getMyFeeQueries);
-router.get('/', protect, allowRoles('admin'), getAllFeeQueries);
-router.post('/:id/reply', protect, allowRoles('student', 'admin'), replyToFeeQuery);
-router.patch('/:id/resolve', protect, allowRoles('admin'), resolveFeeQuery);
+router.get('/', protect, allowRoles('admin', 'accounts'), getAllFeeQueries);
+router.post('/:id/reply', protect, allowRoles('student', 'admin', 'accounts'), replyToFeeQuery);
+router.patch('/:id/resolve', protect, allowRoles('admin', 'accounts'), resolveFeeQuery);
 
 module.exports = router;
